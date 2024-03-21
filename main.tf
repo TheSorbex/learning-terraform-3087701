@@ -33,7 +33,7 @@ module "blog_vpc" {
   }
 }
 
-module "blog_autoscaling" {
+module "autoscaling" {
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "7.4.1"
 
@@ -45,43 +45,53 @@ module "blog_autoscaling" {
   target_group_arns      = [aws_lb_target_group.blog_tg.arn]
   security_groups        = [module.blog_sg.security_group_id]
 
-  image_id                    = data.aws_ami.app_ami.id
+  image_id               = data.aws_ami.app_ami.id
   instance_type          = var.instance_type
 }
 
-resource "aws_lb_target_group" "blog_tg" {
-  name_prefix = "blog"
-  protocol    = "HTTP"
-  port        = 80
-  vpc_id      = module.blog_vpc.vpc_id
-  target_type = "instance"
-}
+module "blog_autoscaling" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "6.5.2"
 
-resource "aws_lb_target_group_attachment" "blog_attachment" {
-  target_group_arn = aws_lb_target_group.blog_tg.arn
-  target_id        = blog_autoscaling.blog.id
-  port             = 80
+  name = "blog"
+
+  min_size            = 1
+  max_size            = 2
+  vpc_zone_identifier = module.blog_vpc.public_subnets
+  target_group_arns   = module.blog_alb.target_group_arns
+  security_groups     = [module.blog_sg.security_group_id]
+  instance_type       = var.instance_type
+  image_id            = data.aws_ami.app_ami.id
 }
 
 module "blog_alb" {
-  source = "terraform-aws-modules/alb/aws"
+  source  = "terraform-aws-modules/alb/aws"
+  version = "~> 6.0"
 
-  name            = "blog-alb"
-  vpc_id          = module.blog_vpc.vpc_id
-  subnets         = module.blog_vpc.public_subnets
-  security_groups = [module.blog_sg.security_group_id]
+  name = "blog-alb"
 
-  listeners = {
-    ex-http-https-redirect = {
-      port     = 80
-      protocol = "HTTP"
-      redirect = {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
+  load_balancer_type = "application"
+
+  vpc_id             = module.blog_vpc.vpc_id
+  subnets            = module.blog_vpc.public_subnets
+  security_groups    = [module.blog_sg.security_group_id]
+
+  target_groups = [
+    {
+      name_prefix      = "blog-"
+      backend_protocol = "HTTP"
+      backend_port     = 80
+      target_type      = "instance"
     }
-  }
+  ]
+
+  http_tcp_listeners = [
+    {
+      port               = 80
+      protocol           = "HTTP"
+      target_group_index = 0
+    }
+  ]
 
   tags = {
     Environment = "dev"
