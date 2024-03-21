@@ -33,7 +33,7 @@ module "blog_vpc" {
   }
 }
 
-module "autoscaling" {
+module "blog_autoscaling" {
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "7.4.1"
 
@@ -59,7 +59,7 @@ resource "aws_lb_target_group" "blog_tg" {
 
 resource "aws_lb_target_group_attachment" "blog_attachment" {
   target_group_arn = aws_lb_target_group.blog_tg.arn
-  target_id        = aws_instance.blog.id
+  target_id        = blog_autoscaling.blog.id
   port             = 80
 }
 
