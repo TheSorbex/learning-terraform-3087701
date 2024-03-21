@@ -67,7 +67,6 @@ module "alb" {
   vpc_id          = module.blog_vpc.vpc_id
   subnets         = module.blog_vpc.public_subnets
   security_groups = [module.blog_sg.security_group_id]
-  target_group_arns = [aws_lb_target_group.blog_tg.arn]
 
   listeners = {
     ex-http-https-redirect = {
