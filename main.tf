@@ -81,6 +81,7 @@ module "alb" {
       protocol         = "HTTP"
       port             = 80
       target_type      = "instance"
+      vpc_id           = module.blog_vpc.vpc_id
     }
   }
 
