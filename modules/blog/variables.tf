@@ -12,8 +12,8 @@ variable "ami_filter" {
     })
 
     default = {
-      name   = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
-      owner = "099720109477" # Canonical
+      name   = "bitnami-tomcat-*-x86_64-hvm-ebs-nami"
+      owner = "979382823631" # Bitnami
     }
 }
 
